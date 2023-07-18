@@ -6,7 +6,7 @@ authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11.4"
+python = "3.11.4"
 discord = "^2.3.1"
 dota2 = "^1.1.0"
 steam = "^1.4.4"
