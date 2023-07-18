@@ -1,1 +1,1 @@
-web: python ./Discord/main.py
+web: python main.py
