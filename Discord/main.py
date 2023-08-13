@@ -1,11 +1,11 @@
 import helpers
 from loguru import logger
-
 import discord
 from config import settings
 from discord.ext import commands, tasks
 
 client = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+
 
 
 @client.event
@@ -18,7 +18,7 @@ async def on_ready():
 @client.event
 async def on_message_delete(message: discord.Message):
     """Отправляет discord.Embed при удалении сообщения в логи"""
-    channel = client.get_channel(settings.EDIT_NOTIFICATIONS_CHANNEL_ID)  # log channel id
+    channel = client.get_channel(settings.GUILD_LIST[message.guild.id]["logs"])  # log channel id
     await channel.send(embed=helpers.log_delete(message))
     for attachment in message.attachments:
         await channel.send(attachment.url)
@@ -36,7 +36,7 @@ async def on_message_delete(message: discord.Message):
 async def on_message_edit(message_before: discord.Message, message_after: discord.Message):
     """Отправляет discord.Embed при изменении сообщения в логи"""
     if message_before.content != message_after.content:
-        channel = client.get_channel(settings.EDIT_NOTIFICATIONS_CHANNEL_ID)
+        channel = client.get_channel(settings.GUILD_LIST[message_before.guild.id]["logs"])
 
         is_message_too_big = len(str(message_before.content)) >= 2000 or len(str(message_after.content)) >= 2000
 
@@ -61,22 +61,22 @@ async def on_message_edit(message_before: discord.Message, message_after: discor
 @client.event
 async def on_member_remove(member):
     """Логирует выходы пользователей на сервер"""
-    channel = client.get_channel(settings.EDIT_NOTIFICATIONS_CHANNEL_ID)
+    channel = client.get_channel(settings.GUILD_LIST[member.guild.id]["logs"])
     await channel.send(embed=helpers.leave_log(member))
 
 
 @client.event
 async def on_member_join(member):
     """Логирует заходы пользователей на сервер"""
-    channel = client.get_channel(settings.EDIT_NOTIFICATIONS_CHANNEL_ID)
+    channel = client.get_channel(settings.GUILD_LIST[member.guild.id]["logs"])
     await channel.send(embed=helpers.join_log(member))
 
 
 @tasks.loop(seconds=20.0)
-async def set_banner():
+async def set_banner(ctx):
     # Every 20 seconds changes guild banner with current number of voice members
     # and members of channel
-    guild = client.get_guild(settings.GUILD_ID)
+    guild = client.get_guild(ctx.guild.id)
     helpers.gif_edit(
         settings.BANNER_LOCATION, settings.EDITED_BANNER_LOCATION, guild, settings.COORDINATES_X, settings.COORDINATES_Y
     )
@@ -89,11 +89,21 @@ async def set_banner():
 async def on_voice_state_update(member, before, after):
     # sends logs about self_mute status
     if before.self_mute != after.self_mute:
-        channel = client.get_channel(settings.MICROPHONE_LOGS_CHANNEL)
+        channel = client.get_channel(settings.GUILD_LIST[member.guild.id]["microphone_logs"])
         if after.self_mute:
             await channel.send(embed=helpers.on_mute_log(member))
         else:
             await channel.send(embed=helpers.on_unmute_log(member))
+
+
+@client.command(name="logs")
+async def logs(ctx):
+    settings.GUILD_LIST.update({ctx.guild.id: {"logs": ctx.channel.id}})
+
+
+@client.command(name="microphone_logs")
+async def microphone_logs(ctx):
+    settings.GUILD_LIST.update({ctx.guild.id: {"microphone_logs": ctx.channel.id}})
 
 
 if __name__ == "__main__":
