@@ -98,13 +98,23 @@ async def on_voice_state_update(member, before, after):
 
 @client.command(name="logs")
 async def logs(ctx):
-    settings.GUILD_LIST.update({ctx.guild.id: {"logs": ctx.channel.id}})
+    if len(settings.GUILD_LIST)!=0:
+        settings.GUILD_LIST[ctx.guild.id] = settings.GUILD_LIST[ctx.guild.id] | {"logs": ctx.channel.id}
+
+    else:
+        settings.GUILD_LIST[ctx.guild.id] = {"logs": ctx.channel.id}
+
+    print(settings.GUILD_LIST)
 
 
 @client.command(name="microphone_logs")
 async def microphone_logs(ctx):
-    settings.GUILD_LIST.update({ctx.guild.id: {"microphone_logs": ctx.channel.id}})
+    if len(settings.GUILD_LIST)!=0:
+        settings.GUILD_LIST[ctx.guild.id] = settings.GUILD_LIST[ctx.guild.id] | {"microphone_logs": ctx.channel.id}
 
+    else:
+        settings.GUILD_LIST[ctx.guild.id] = {"microphone_logs": ctx.channel.id}
+    print(settings.GUILD_LIST)
 
 if __name__ == "__main__":
     client.run(settings.DISCORD_API_TOKEN)
