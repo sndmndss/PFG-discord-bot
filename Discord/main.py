@@ -18,7 +18,7 @@ async def on_ready():
 @client.event
 async def on_message_delete(message: discord.Message):
     """Отправляет discord.Embed при удалении сообщения в логи"""
-    channel = client.get_channel(settings.GUILD_LIST[message.guild.id]["logs"])  # log channel id
+    channel = client.get_channel(settings.LOGS_GUILD_LIST[message.guild.id])  # log channel id
     await channel.send(embed=helpers.log_delete(message))
     for attachment in message.attachments:
         await channel.send(attachment.url)
@@ -36,7 +36,7 @@ async def on_message_delete(message: discord.Message):
 async def on_message_edit(message_before: discord.Message, message_after: discord.Message):
     """Отправляет discord.Embed при изменении сообщения в логи"""
     if message_before.content != message_after.content:
-        channel = client.get_channel(settings.GUILD_LIST[message_before.guild.id]["logs"])
+        channel = client.get_channel(settings.LOGS_GUILD_LIST[message_before.guild.id])
 
         is_message_too_big = len(str(message_before.content)) >= 2000 or len(str(message_after.content)) >= 2000
 
@@ -61,14 +61,14 @@ async def on_message_edit(message_before: discord.Message, message_after: discor
 @client.event
 async def on_member_remove(member):
     """Логирует выходы пользователей на сервер"""
-    channel = client.get_channel(settings.GUILD_LIST[member.guild.id]["logs"])
+    channel = client.get_channel(settings.LOGS_GUILD_LIST[member.guild.id])
     await channel.send(embed=helpers.leave_log(member))
 
 
 @client.event
 async def on_member_join(member):
     """Логирует заходы пользователей на сервер"""
-    channel = client.get_channel(settings.GUILD_LIST[member.guild.id]["logs"])
+    channel = client.get_channel(settings.LOGS_GUILD_LIST[member.guild.id])
     await channel.send(embed=helpers.join_log(member))
 
 
@@ -89,7 +89,7 @@ async def set_banner(ctx):
 async def on_voice_state_update(member, before, after):
     # sends logs about self_mute status
     if before.self_mute != after.self_mute:
-        channel = client.get_channel(settings.GUILD_LIST[member.guild.id]["microphone_logs"])
+        channel = client.get_channel(settings.MICROPHONE_GUILD_LIST[member.guild.id])
         if after.self_mute:
             await channel.send(embed=helpers.on_mute_log(member))
         else:
@@ -98,23 +98,12 @@ async def on_voice_state_update(member, before, after):
 
 @client.command(name="logs")
 async def logs(ctx):
-    if len(settings.GUILD_LIST)!=0:
-        settings.GUILD_LIST[ctx.guild.id] = settings.GUILD_LIST[ctx.guild.id] | {"logs": ctx.channel.id}
-
-    else:
-        settings.GUILD_LIST[ctx.guild.id] = {"logs": ctx.channel.id}
-
-    print(settings.GUILD_LIST)
+    settings.LOGS_GUILD_LIST[ctx.guild.id] = ctx.channel.id
 
 
 @client.command(name="microphone_logs")
 async def microphone_logs(ctx):
-    if len(settings.GUILD_LIST)!=0:
-        settings.GUILD_LIST[ctx.guild.id] = settings.GUILD_LIST[ctx.guild.id] | {"microphone_logs": ctx.channel.id}
-
-    else:
-        settings.GUILD_LIST[ctx.guild.id] = {"microphone_logs": ctx.channel.id}
-    print(settings.GUILD_LIST)
+    settings.MICROPHONE_GUILD_LIST[ctx.guild.id] = ctx.channel.id
 
 if __name__ == "__main__":
     client.run(settings.DISCORD_API_TOKEN)
