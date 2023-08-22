@@ -1,6 +1,8 @@
 import sqlite3
 import pandas as pd
-import settings
+from sys import path
+path.append('.')
+from config import settings
 
 
 class DataBase:

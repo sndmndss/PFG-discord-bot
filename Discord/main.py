@@ -1,7 +1,9 @@
 import helpers
 from loguru import logger
 import discord
-
+from sys import path
+path.append('.')
+import config
 from config import settings
 from discord.ext import commands, tasks
 import cursor
