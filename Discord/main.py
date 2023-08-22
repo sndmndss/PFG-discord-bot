@@ -1,9 +1,12 @@
 import helpers
 from loguru import logger
 import discord
-from config import settings
+from config import settings as settings
 from discord.ext import commands, tasks
+import cursor
 
+
+db = cursor.DataBase()
 client = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
 
@@ -12,13 +15,14 @@ client = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 async def on_ready():
     logger.info("The bot is working now")
     logger.info("-------------------------------------------")
+    db._extract()
     # set_banner.start()  # starts loop of banner updating
 
 
 @client.event
 async def on_message_delete(message: discord.Message):
     """Отправляет discord.Embed при удалении сообщения в логи"""
-    channel = client.get_channel(settings.LOGS_GUILD_LIST[message.guild.id])  # log channel id
+    channel = client.get_channel(settings.LOGS_GUILD_LIST[message.guild.id]) 
     await channel.send(embed=helpers.log_delete(message))
     for attachment in message.attachments:
         await channel.send(attachment.url)
@@ -97,13 +101,26 @@ async def on_voice_state_update(member, before, after):
 
 
 @client.command(name="logs")
+@commands.has_permissions(administrator=True)
 async def logs(ctx):
-    settings.LOGS_GUILD_LIST[ctx.guild.id] = ctx.channel.id
+    db.save_id(ctx.guild.id, ctx.channel.id, None)
+
 
 
 @client.command(name="microphone_logs")
+@commands.has_permissions(administrator=True)
 async def microphone_logs(ctx):
-    settings.MICROPHONE_GUILD_LIST[ctx.guild.id] = ctx.channel.id
+    db.save_id(ctx.guild.id, None, ctx.channel.id)
+
+
+@client.command(name="reset")
+@commands.has_permissions(administrator=True)
+async def reset(ctx):
+    db.reset(ctx.guild.id)
+
 
 if __name__ == "__main__":
-    client.run(settings.DISCORD_API_TOKEN)
+    client.run("MTEyNTQ2NTcxMjIzMjc3OTk4Nw.GwYTE-.Qp80bCkIRdcbvxVrB3day1PbgVUkRsO5ACvp1o")
+    
+
+
