@@ -1,5 +1,15 @@
 # PFG-discord-bot
 
-pip install poetry
+Discord bot that gives different logs and changes gif avatar with user activity.
 
-install poetry
+- Python version 3.7+
+- Using Discord.py
+
+## Guide
+
+`pip install poetry`
+
+`poetry install`
+
+
+
