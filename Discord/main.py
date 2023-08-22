@@ -1,7 +1,8 @@
 import helpers
 from loguru import logger
 import discord
-from config import settings as settings
+
+from config import settings
 from discord.ext import commands, tasks
 import cursor
 
