@@ -123,7 +123,7 @@ async def reset(ctx):
 
 
 if __name__ == "__main__":
-    client.run("MTEyNTQ2NTcxMjIzMjc3OTk4Nw.GwYTE-.Qp80bCkIRdcbvxVrB3day1PbgVUkRsO5ACvp1o")
+    client.run(settings.DISCORD_API_TOKEN)
     
 
 
