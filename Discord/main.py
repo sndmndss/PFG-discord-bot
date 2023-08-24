@@ -3,10 +3,11 @@ from loguru import logger
 import discord
 from sys import path
 path.append('.')
-import config
 from config import settings
 from discord.ext import commands, tasks
 import cursor
+import asyncio
+import statistic
 
 
 db = cursor.DataBase()
@@ -19,8 +20,23 @@ async def on_ready():
     logger.info("The bot is working now")
     logger.info("-------------------------------------------")
     db._extract()
+    await statistic_message()
+    # background_task.start()
     # set_banner.start()  # starts loop of banner updating
 
+@client.event
+async def on_message(ctx):
+    if not ctx.author.bot:
+        db.save_statistic('Today messages')
+
+
+
+async def statistic_message():
+    #TODO: getting channel for statistic from database and sending embed or messag with statistics
+    guilds = client.guilds
+    for guild in guilds:
+        temp = client.get_guild(guild.id)
+        client.get_channel()
 
 @client.event
 async def on_message_delete(message: discord.Message):
@@ -70,6 +86,7 @@ async def on_member_remove(member):
     """Логирует выходы пользователей на сервер"""
     channel = client.get_channel(settings.LOGS_GUILD_LIST[member.guild.id])
     await channel.send(embed=helpers.leave_log(member))
+    db.save_statistic('Remove')
 
 
 @client.event
@@ -77,6 +94,7 @@ async def on_member_join(member):
     """Логирует заходы пользователей на сервер"""
     channel = client.get_channel(settings.LOGS_GUILD_LIST[member.guild.id])
     await channel.send(embed=helpers.join_log(member))
+    db.save_statistic('Join')
 
 
 @tasks.loop(seconds=20.0)
@@ -101,6 +119,7 @@ async def on_voice_state_update(member, before, after):
             await channel.send(embed=helpers.on_mute_log(member))
         else:
             await channel.send(embed=helpers.on_unmute_log(member))
+    db.save_statistic('Mute')
 
 
 @client.command(name="logs")

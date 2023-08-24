@@ -1,14 +1,32 @@
 import sqlite3
 import pandas as pd
 from sys import path
-path.append('.')
 from config import settings
 
+# TODO: Searching row in database by name or id
 
 class DataBase:
     def __init__(self): # creates a connection with guild id database
         self.conn = conn = sqlite3.connect(f'guilds')
         self.c = conn.cursor()
+        self.c.execute(""" CREATE TABLE IF NOT EXISTS statistic (
+                                        category char(255) PRIMARY KEY,
+                                        number integer
+                                    ); """)
+        
+    def save_statistic(self, category: str):
+        self.c.execute('''INSERT OR IGNORE INTO statistic 
+                       (category, number) 
+                       VALUES ((?), 0)
+                       ''', (category,))
+        self.c.execute(
+                       '''
+                       UPDATE statistic SET number = number + 1 WHERE category = (?)
+                       ''',(category,))
+        self.conn.commit()
+        
+    
+
 
     def save_id(self, 
                 guild_id: int, 
@@ -61,13 +79,19 @@ class DataBase:
 
     def _update(self, logs: dict, mic_logs: dict): # saves 2 dicts to settings
         settings.LOGS_GUILD_LIST, settings.MICROPHONE_GUILD_LIST = logs, mic_logs
+
+    
         
 
     def show_table(self)-> pd.DataFrame: 
         self.c.execute('''
             SELECT *
-            FROM id_table a
+            FROM statistic a
             ''')
-        df = pd.DataFrame(self.c.fetchall(), columns=['guild_id','logs_channel_id','microphone_channel_id'])
+        df = pd.DataFrame(self.c.fetchall())
         return df
     
+    def delete_table(self):
+        self.c.execute('''DROP TABLE statistic;''')
+    
+
