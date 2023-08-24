@@ -86,7 +86,7 @@ class DataBase:
     def show_table(self)-> pd.DataFrame: 
         self.c.execute('''
             SELECT *
-            FROM statistic a
+            FROM id_table a
             ''')
         df = pd.DataFrame(self.c.fetchall())
         return df
@@ -95,3 +95,5 @@ class DataBase:
         self.c.execute('''DROP TABLE statistic;''')
     
 
+db = DataBase()
+print(db.show_table())

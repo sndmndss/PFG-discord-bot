@@ -7,7 +7,7 @@ from config import settings
 from discord.ext import commands, tasks
 import cursor
 import asyncio
-import statistic
+import task_time
 
 
 db = cursor.DataBase()
@@ -20,23 +20,15 @@ async def on_ready():
     logger.info("The bot is working now")
     logger.info("-------------------------------------------")
     db._extract()
-    await statistic_message()
-    # background_task.start()
+    statistic_message.start()
     # set_banner.start()  # starts loop of banner updating
+
 
 @client.event
 async def on_message(ctx):
     if not ctx.author.bot:
         db.save_statistic('Today messages')
 
-
-
-async def statistic_message():
-    #TODO: getting channel for statistic from database and sending embed or messag with statistics
-    guilds = client.guilds
-    for guild in guilds:
-        temp = client.get_guild(guild.id)
-        client.get_channel()
 
 @client.event
 async def on_message_delete(message: discord.Message):
@@ -110,6 +102,13 @@ async def set_banner(ctx):
     await guild.edit(banner=banner)
 
 
+@tasks.loop(seconds=20.0)
+async def statistic_message(ctx):
+    #TODO: getting channel for statistic from database and sending embed or messag with statistics
+    channel = client.get_channel(ctx.channel.id)
+    print(channel)
+
+
 @client.event
 async def on_voice_state_update(member, before, after):
     # sends logs about self_mute status
@@ -142,7 +141,7 @@ async def reset(ctx):
 
 
 if __name__ == "__main__":
-    client.run(settings.DISCORD_API_TOKEN)
+    client.run('MTEyNTQ2NTcxMjIzMjc3OTk4Nw.Gq5-bW.Vmhz9zN9vSaj4xSQa_3KI9aBWeX154S-iuHO48')
     
 
 
