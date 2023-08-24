@@ -102,7 +102,7 @@ async def set_banner(ctx):
     await guild.edit(banner=banner)
 
 
-@tasks.loop(seconds=20.0)
+@tasks.loop(seconds=task_time.delay())
 async def statistic_message(ctx):
     #TODO: getting channel for statistic from database and sending embed or messag with statistics
     channel = client.get_channel(ctx.channel.id)
@@ -141,7 +141,7 @@ async def reset(ctx):
 
 
 if __name__ == "__main__":
-    client.run('MTEyNTQ2NTcxMjIzMjc3OTk4Nw.Gq5-bW.Vmhz9zN9vSaj4xSQa_3KI9aBWeX154S-iuHO48')
+    client.run(settings.DISCORD_API_TOKEN)
     
 
 
