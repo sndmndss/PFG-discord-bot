@@ -1,25 +1,20 @@
 import helpers
 from loguru import logger
 import discord
-from sys import path
-path.append('.')
 from config import settings
 from discord.ext import commands, tasks
 import cursor
-import asyncio
-import task_time
+from datetime import datetime, time
 
 
 db = cursor.DataBase()
 client = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
 
-
 @client.event
 async def on_ready():
     logger.info("The bot is working now")
     logger.info("-------------------------------------------")
-    db._extract()
     statistic_message.start()
     # set_banner.start()  # starts loop of banner updating
 
@@ -102,11 +97,16 @@ async def set_banner(ctx):
     await guild.edit(banner=banner)
 
 
-@tasks.loop(seconds=task_time.delay())
-async def statistic_message(ctx):
-    #TODO: getting channel for statistic from database and sending embed or messag with statistics
-    channel = client.get_channel(ctx.channel.id)
-    print(channel)
+@tasks.loop(minutes=10)
+async def statistic_message():
+    for guild in db.get_statistic_id():
+        channel = client.get_channel(guild[0])
+        time_now = datetime.now().strftime('%H')
+        if time_now == '01':
+            message_text = ''
+            for row in db.get_statistic():
+                message_text += f'{row[0]}: {row[1]}\n'
+            await channel.send(message_text)
 
 
 @client.event
@@ -127,7 +127,6 @@ async def logs(ctx):
     db.save_id(ctx.guild.id, ctx.channel.id, None)
 
 
-
 @client.command(name="microphone_logs")
 @commands.has_permissions(administrator=True)
 async def microphone_logs(ctx):
@@ -141,7 +140,4 @@ async def reset(ctx):
 
 
 if __name__ == "__main__":
-    client.run(settings.DISCORD_API_TOKEN)
-    
-
-
+    client.run('MTE0MDQxOTIzNDg1ODUzNzAxMA.G7l4Qq.HNqAQYOrjwy7kPFFNgKi22SbQ9-xsoVhXvfPfo')
