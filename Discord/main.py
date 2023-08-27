@@ -4,7 +4,7 @@ import discord
 from config import settings
 from discord.ext import commands, tasks
 import cursor
-from datetime import datetime, time
+from datetime import datetime
 
 
 db = cursor.DataBase()
@@ -22,12 +22,13 @@ async def on_ready():
 @client.event
 async def on_message(ctx):
     if not ctx.author.bot:
-        db.save_statistic('Today messages')
+        db.save_statistic("messages", ctx.guild.id)
+    await client.process_commands(ctx)
 
 
 @client.event
 async def on_message_delete(message: discord.Message):
-    """Отправляет discord.Embed при удалении сообщения в логи"""
+    """Sends discord.Embed when message deletes to logs channel"""
     channel = client.get_channel(settings.LOGS_GUILD_LIST[message.guild.id]) 
     await channel.send(embed=helpers.log_delete(message))
     for attachment in message.attachments:
@@ -44,7 +45,7 @@ async def on_message_delete(message: discord.Message):
 
 @client.event
 async def on_message_edit(message_before: discord.Message, message_after: discord.Message):
-    """Отправляет discord.Embed при изменении сообщения в логи"""
+    """Sends discord.Embed when message changes to logs channel"""
     if message_before.content != message_after.content:
         channel = client.get_channel(settings.LOGS_GUILD_LIST[message_before.guild.id])
 
@@ -70,18 +71,18 @@ async def on_message_edit(message_before: discord.Message, message_after: discor
 
 @client.event
 async def on_member_remove(member):
-    """Логирует выходы пользователей на сервер"""
+    """log of leaving server"""
     channel = client.get_channel(settings.LOGS_GUILD_LIST[member.guild.id])
     await channel.send(embed=helpers.leave_log(member))
-    db.save_statistic('Remove')
+    db.save_statistic("people removed", member.guild.id)
 
 
 @client.event
 async def on_member_join(member):
-    """Логирует заходы пользователей на сервер"""
+    """logs of joining server"""
     channel = client.get_channel(settings.LOGS_GUILD_LIST[member.guild.id])
     await channel.send(embed=helpers.join_log(member))
-    db.save_statistic('Join')
+    db.save_statistic("people joined", member.guild.id)
 
 
 @tasks.loop(seconds=20.0)
@@ -99,18 +100,20 @@ async def set_banner(ctx):
 
 @tasks.loop(minutes=10)
 async def statistic_message():
-    for guild in db.get_statistic_id():
-        channel = client.get_channel(guild[0])
-        time_now = datetime.now().strftime('%H')
-        if time_now == '01':
-            message_text = ''
-            for row in db.get_statistic():
-                message_text += f'{row[0]}: {row[1]}\n'
-            await channel.send(message_text)
+    time_now = datetime.now().strftime("%H")
+    if time_now == "00":
+        for generator in db.get_statistic():
+            for row in generator:
+                statistic_channel_id = db.get_id(row[0])
+                if statistic_channel_id:
+                    channel = client.get_channel(db.get_id(row[0])[0][0])
+                    message_text = f"Today {row[1]}: {row[2]}\n"
+                    await channel.send(embed=helpers.statistic_embed(message_text))
 
 
 @client.event
 async def on_voice_state_update(member, before, after):
+    db.save_statistic("muted", member.guild.id)
     # sends logs about self_mute status
     if before.self_mute != after.self_mute:
         channel = client.get_channel(settings.MICROPHONE_GUILD_LIST[member.guild.id])
@@ -118,19 +121,24 @@ async def on_voice_state_update(member, before, after):
             await channel.send(embed=helpers.on_mute_log(member))
         else:
             await channel.send(embed=helpers.on_unmute_log(member))
-    db.save_statistic('Mute')
 
 
 @client.command(name="logs")
 @commands.has_permissions(administrator=True)
 async def logs(ctx):
-    db.save_id(ctx.guild.id, ctx.channel.id, None)
+    db.save_id(ctx.guild.id, ctx.channel.id, None, None)
 
 
 @client.command(name="microphone_logs")
 @commands.has_permissions(administrator=True)
 async def microphone_logs(ctx):
-    db.save_id(ctx.guild.id, None, ctx.channel.id)
+    db.save_id(ctx.guild.id, None, ctx.channel.id, None)
+
+
+@client.command(name="statistic")
+@commands.has_permissions(administrator=True)
+async def statistic(ctx):
+    db.save_id(ctx.guild.id, None, None, ctx.channel.id)
 
 
 @client.command(name="reset")
@@ -140,4 +148,4 @@ async def reset(ctx):
 
 
 if __name__ == "__main__":
-    client.run('MTE0MDQxOTIzNDg1ODUzNzAxMA.G7l4Qq.HNqAQYOrjwy7kPFFNgKi22SbQ9-xsoVhXvfPfo')
+    client.run(settings.DISCORD_API_TOKEN)
