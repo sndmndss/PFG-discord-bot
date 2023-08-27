@@ -10,7 +10,8 @@ class DataBase:
         self.c.execute(""" CREATE TABLE IF NOT EXISTS id_table (
                                                 guild_id integer PRIMARY KEY,
                                                 logs_channel_id integer,
-                                                microphone_channel_id integer
+                                                microphone_channel_id integer,
+                                                statistic_channel_id
                                             ); """)
         self.create_statistic_table()
         self.extract()
