@@ -5,6 +5,7 @@ from config import settings
 from discord.ext import commands, tasks
 from DataBases import cursor
 from datetime import datetime
+from pytz import timezone
 
 
 db = cursor.DataBase()
@@ -15,6 +16,9 @@ client = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 async def on_ready():
     logger.info("The bot is working now")
     logger.info("-------------------------------------------")
+    for guild in client.guilds:
+        # Adding each guild's invites to our dict
+        settings.INVITES[guild.id] = await guild.invites()
     statistic_message.start()
     # set_banner.start()  # starts loop of banner updating
 
@@ -83,6 +87,15 @@ async def on_member_join(member):
     channel = client.get_channel(settings.LOGS_GUILD_LIST[member.guild.id])
     await channel.send(embed=helpers.join_log(member))
     db.save_statistic("people joined", member.guild.id)
+    invites_before_join = settings.INVITES[member.guild.id]
+    invites_after_join = await member.guild.invites()
+    for invite in invites_before_join:
+        if invite.uses < find_invite_by_code(invites_after_join, invite.code).uses:
+            embed = discord.Embed(title=f"Inviter: {invite.inviter}")
+            embed.add_field(name="Invite Code: ", value=invite.code)
+            await channel.send(embed=embed)
+            settings.INVITES[member.guild.id] = invites_after_join
+            return
 
 
 @tasks.loop(seconds=20.0)
@@ -100,7 +113,9 @@ async def set_banner(ctx):
 
 @tasks.loop(minutes=10)
 async def statistic_message():
-    time_now = datetime.now().strftime("%H")
+    kyiv = timezone("Europe/Kiev")
+    kv_time = datetime.now(kyiv)
+    time_now = kv_time.strftime("%H")
     if time_now == "00":
         for generator in db.get_statistic():
             for row in generator:
@@ -147,5 +162,11 @@ async def reset(ctx):
     db.reset(ctx.guild.id)
 
 
+def find_invite_by_code(invite_list, code):
+    for inv in invite_list:
+        if inv.code == code:
+            return inv
+
+
 if __name__ == "__main__":
-    client.run(settings.DISCORD_API_TOKEN)
+    client.run("MTEyNTQ2NTcxMjIzMjc3OTk4Nw.GeljQf.h6IPB6hSaHuOxJ9jZGl-Ng5McPYisvvgOmbCkE")
