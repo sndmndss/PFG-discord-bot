@@ -12,6 +12,7 @@ class DataBase:
                                                 logs_channel_id integer,
                                                 microphone_channel_id integer
                                             ); """)
+        self.create_statistic_table()
         self.extract()
 
     def create_statistic_table(self):
