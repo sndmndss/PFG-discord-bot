@@ -111,7 +111,7 @@ async def set_banner(ctx):
     await guild.edit(banner=banner)
 
 
-@tasks.loop(minutes=10)
+@tasks.loop(hours=1)
 async def statistic_message():
     kyiv = timezone("Europe/Kiev")
     kv_time = datetime.now(kyiv)

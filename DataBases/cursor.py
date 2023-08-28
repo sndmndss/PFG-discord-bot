@@ -111,6 +111,5 @@ class DataBase:
         channel_id = []
         for _ in self.c.fetchall():
             channel_id.append(_)
+        self._renew()
         return channel_id
-
-db = DataBase()
