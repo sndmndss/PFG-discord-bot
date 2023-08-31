@@ -98,7 +98,7 @@ async def set_banner(ctx):
     await guild.edit(banner=banner)
 
 
-@tasks.loop(minutes=10)
+@tasks.loop(hours=1)
 async def statistic_message():
     time_now = datetime.now().strftime("%H")
     if time_now == "00":
