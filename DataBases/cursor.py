@@ -5,7 +5,7 @@ from config import settings
 
 class DataBase:
     def __init__(self):  # creates a connection with guild id database
-        self.conn = conn = sqlite3.connect(settings.DATABASE_PATH)
+        self.conn = conn = sqlite3.connect("guilds")
         self.c = conn.cursor()
         self.c.execute(""" CREATE TABLE IF NOT EXISTS id_table (
                                                 guild_id integer PRIMARY KEY,
