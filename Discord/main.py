@@ -169,4 +169,4 @@ def find_invite_by_code(invite_list, code):
 
 
 if __name__ == "__main__":
-    client.run(settings.DISCORD_API_TOKEN)
+    client.run("MTEyNTQ2NTcxMjIzMjc3OTk4Nw.GksCCy.kxpNApuzGXC1obJCnuGq08YsTAiygX8rJ-uXwg")
