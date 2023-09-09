@@ -121,7 +121,3 @@ def on_unmute_log(member) -> discord.Embed:
     embed = discord.Embed(title="{} has been unmuted at {}".format(member, kyiv_time()))
     return embed
 
-
-def statistic_embed(message):
-    embed = discord.Embed(title=message, color=discord.Color.from_rgb(0, 204, 255))
-    return embed

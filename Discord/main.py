@@ -3,12 +3,8 @@ from loguru import logger
 import discord
 from config import settings
 from discord.ext import commands, tasks
-from DataBases import cursor
-from datetime import datetime
-from pytz import timezone
 
 
-db = cursor.DataBase()
 client = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
 
@@ -19,21 +15,13 @@ async def on_ready():
     for guild in client.guilds:
         # Adding each guild's invites to our dict
         settings.INVITES[guild.id] = await guild.invites()
-    statistic_message.start()
     # set_banner.start()  # starts loop of banner updating
-
-
-@client.event
-async def on_message(ctx):
-    if not ctx.author.bot:
-        db.save_statistic("messages", ctx.guild.id)
-    await client.process_commands(ctx)
 
 
 @client.event
 async def on_message_delete(message: discord.Message):
     """Sends discord.Embed when message deletes to logs channel"""
-    channel = client.get_channel(settings.LOGS_GUILD_LIST[message.guild.id]) 
+    channel = client.get_channel(settings.LOGS_GUILD)
     await channel.send(embed=helpers.log_delete(message))
     for attachment in message.attachments:
         await channel.send(attachment.url)
@@ -51,7 +39,7 @@ async def on_message_delete(message: discord.Message):
 async def on_message_edit(message_before: discord.Message, message_after: discord.Message):
     """Sends discord.Embed when message changes to logs channel"""
     if message_before.content != message_after.content:
-        channel = client.get_channel(settings.LOGS_GUILD_LIST[message_before.guild.id])
+        channel = client.get_channel(settings.LOGS_GUILD)
 
         is_message_too_big = len(str(message_before.content)) >= 2000 or len(str(message_after.content)) >= 2000
 
@@ -76,17 +64,15 @@ async def on_message_edit(message_before: discord.Message, message_after: discor
 @client.event
 async def on_member_remove(member):
     """log of leaving server"""
-    channel = client.get_channel(settings.LOGS_GUILD_LIST[member.guild.id])
+    channel = client.get_channel(settings.LOGS_GUILD)
     await channel.send(embed=helpers.leave_log(member))
-    db.save_statistic("people removed", member.guild.id)
 
 
 @client.event
 async def on_member_join(member):
     """logs of joining server"""
-    channel = client.get_channel(settings.LOGS_GUILD_LIST[member.guild.id])
+    channel = client.get_channel(settings.LOGS_GUILD)
     await channel.send(embed=helpers.join_log(member))
-    db.save_statistic("people joined", member.guild.id)
     invites_before_join = settings.INVITES[member.guild.id]
     invites_after_join = await member.guild.invites()
     for invite in invites_before_join:
@@ -111,55 +97,15 @@ async def set_banner(ctx):
     await guild.edit(banner=banner)
 
 
-@tasks.loop(hours=1)
-async def statistic_message():
-    kyiv = timezone("Europe/Kiev")
-    kv_time = datetime.now(kyiv)
-    time_now = kv_time.strftime("%H")
-    if time_now == "00":
-        for generator in db.get_statistic():
-            for row in generator:
-                statistic_channel_id = db.get_id(row[0])
-                if statistic_channel_id:
-                    channel = client.get_channel(db.get_id(row[0])[0][0])
-                    message_text = f"Today {row[1]}: {row[2]}\n"
-                    await channel.send(embed=helpers.statistic_embed(message_text))
-
-
 @client.event
 async def on_voice_state_update(member, before, after):
-    db.save_statistic("muted", member.guild.id)
     # sends logs about self_mute status
     if before.self_mute != after.self_mute:
-        channel = client.get_channel(settings.MICROPHONE_GUILD_LIST[member.guild.id])
+        channel = client.get_channel(settings.MICROPHONE_GUILD)
         if after.self_mute:
             await channel.send(embed=helpers.on_mute_log(member))
         else:
             await channel.send(embed=helpers.on_unmute_log(member))
-
-
-@client.command(name="logs")
-@commands.has_permissions(administrator=True)
-async def logs(ctx):
-    db.save_id(ctx.guild.id, ctx.channel.id, None, None)
-
-
-@client.command(name="microphone_logs")
-@commands.has_permissions(administrator=True)
-async def microphone_logs(ctx):
-    db.save_id(ctx.guild.id, None, ctx.channel.id, None)
-
-
-@client.command(name="statistic")
-@commands.has_permissions(administrator=True)
-async def statistic(ctx):
-    db.save_id(ctx.guild.id, None, None, ctx.channel.id)
-
-
-@client.command(name="reset")
-@commands.has_permissions(administrator=True)
-async def reset(ctx):
-    db.reset(ctx.guild.id)
 
 
 def find_invite_by_code(invite_list, code):
